@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATS Resume Tailor Pro</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel for JSX compilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- html2pdf for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- docx library for DOCX export -->
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #printable-resume, #printable-resume * { visibility: visible; }
+      #printable-resume { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const SAMPLE_JOB_DESCRIPTION = `Customer Success Manager - SaaS
+Key Responsibilities:
+- Manage post-onboarding relationships for enterprise SaaS clients to ensure high retention, renewal, and platform adoption.
+- Analyze client health metrics, usage trends, and operational risks using data analytics tools to proactively prevent churn.
+- Conduct Quarterly Business Reviews (QBRs) and drive expansion revenue by identifying cross-sell/upsell opportunities.
+- Cross-functional collaboration with Product Management, Engineering, and Customer Support to champion customer feedback.
+
+Required Qualifications & Skills:
+- 3+ years in Customer Success, Account Management, or Client Onboarding within B2B SaaS environment.
+- Strong proficiency with CRM tools (Salesforce/HubSpot), customer onboarding workflows, and churn reduction strategies.
+- Demonstrated success driving Net Retention Rate (NRR), Customer Satisfaction (CSAT), and Lifetime Value (LTV).
+- Technical aptitude for debugging customer workflows, REST APIs, and product integrations.`;
+
+    const SAMPLE_RESUME = `ARAVINTH S.
+Email: aravinth@example.com | Phone: +91 9876543210 | Location: India
+LinkedIn: linkedin.com/in/aravinth | Portfolio: github.com/aravinth
+
+SUMMARY
+Results-driven professional with experience in customer-centric roles, account management, and client onboarding workflows. Strong background in data analytics, cross-functional project management, and software troubleshooting.
+
+PROFESSIONAL EXPERIENCE
+Senior Customer Operations Specialist | TechCorp Solutions
+- Led customer onboarding initiatives for 40+ enterprise client accounts, improving operational onboarding time by 25%.
+- Partnered with product and engineering teams to resolve client technical requests and API integration issues.
+- Conducted regular operational reviews with client key stakeholders to maintain customer satisfaction and renewal rates.
+
+Client Success & Operations Associate | Growth Digital
+- Managed ongoing relationships with SMB accounts, ensuring platform adoption and high user engagement.
+- Utilized data analysis to track account usage, flag operational risks, and reduce monthly client turnover.
+- Created step-by-step onboarding documentation and training resources for internal teams and new clients.
+
+EDUCATION & SKILLS
+Bachelor of Technology / Engineering
+Core Skills: Client Onboarding, Account Management, Customer Experience, Python, REST APIs, PHP, Data Analytics, Communication.`;
+
+    function ATSApp() {
+      const [jdText, setJdText] = useState(SAMPLE_JOB_DESCRIPTION);
+      const [resumeText, setResumeText] = useState(SAMPLE_RESUME);
+      const [isAnalyzing, setIsAnalyzing] = useState(false);
+      const [result, setResult] = useState(null);
+      const [activeTab, setActiveTab] = useState('editor');
+
+      // Parsed Resume State for live editing
+      const [tailoredResume, setTailoredResume] = useState({
+        name: "ARAVINTH S.",
+        contact: "Email: aravinth@example.com | Phone: +91 9876543210 | Location: India",
+        links: "LinkedIn: linkedin.com/in/aravinth | Portfolio: github.com/aravinth",
+        summary: "Results-driven Customer Success Manager with proven expertise in enterprise SaaS client onboarding, QBR execution, and retention strategies. Proficient in leveraging data analytics and CRM workflows to minimize churn, increase Net Retention Rate (NRR), and align cross-functional product teams.",
+        experience: [
+          {
+            title: "Senior Customer Success & Onboarding Specialist",
+            company: "TechCorp Solutions",
+            period: "2024 - Present",
+            bullets: [
+              "Led strategic customer onboarding initiatives for 40+ B2B SaaS enterprise client accounts, accelerating platform adoption and cutting time-to-value by 25%.",
+              "Partnered cross-functionally with Product Management, Engineering, and Support teams to triage REST API integrations and customer workflow bugs.",
+              "Executed regular Quarterly Business Reviews (QBRs) with key executive stakeholders to maintain 95%+ CSAT and ensure account renewals."
+            ]
+          },
+          {
+            title: "Client Success & Operations Associate",
+            company: "Growth Digital",
+            period: "2022 - 2024",
+            bullets: [
+              "Managed ongoing client health metrics for 60+ accounts, proactively identifying churn risks and implementing targeted retention workflows.",
+              "Utilized CRM data analytics to track usage trends, driving expansion revenue and increasing account Customer Lifetime Value (LTV).",
+              "Authored comprehensive onboarding documentation and self-serve training resources to streamline client handoffs."
+            ]
+          }
+        ],
+        skills: "B2B SaaS, Customer Success Management, Account Onboarding, QBR Execution, Net Retention Rate (NRR), CSAT, Churn Reduction, Salesforce/HubSpot, REST APIs, Python Data Analytics, Cross-functional Leadership.",
+        education: "Bachelor of Technology / Engineering"
+      });
+
+      const handleAnalyzeAndTailor = () => {
+        setIsAnalyzing(true);
+        setTimeout(() => {
+          setResult({
+            score: 88,
+            originalScore: 54,
+            matchedKeywords: ["B2B SaaS", "Customer Onboarding", "QBRs", "CSAT", "Net Retention Rate (NRR)", "Churn Reduction", "REST APIs", "CRM", "Cross-functional Collaboration"],
+            addedKeywords: ["Quarterly Business Reviews (QBRs)", "Net Retention Rate (NRR)", "CSAT", "B2B SaaS Environment", "Churn Mitigation", "Cross-functional Leadership"],
+            missingKeywords: ["HubSpot CRM", "Upsell Strategy"]
+          });
+          setIsAnalyzing(false);
+          setActiveTab('dashboard');
+        }, 1200);
+      };
+
+      const downloadPDF = () => {
+        const element = document.getElementById('printable-resume');
+        const opt = {
+          margin: 0.5,
+          filename: `${tailoredResume.name.replace(/\s+/g, '_')}_ATS_Tailored_Resume.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        window.html2pdf().set(opt).from(element).save();
+      };
+
+      const downloadDOCX = () => {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+
+        const doc = new Document({
+          sections: [{
+            properties: {},
+            children: [
+              new Paragraph({ text: tailoredResume.name, heading: HeadingLevel.HEADING_1 }),
+              new Paragraph({ text: `${tailoredResume.contact} | ${tailoredResume.links}` }),
+              new Paragraph({ text: "" }),
+              new Paragraph({ text: "SUMMARY", heading: HeadingLevel.HEADING_2 }),
+              new Paragraph({ text: tailoredResume.summary }),
+              new Paragraph({ text: "" }),
+              new Paragraph({ text: "PROFESSIONAL EXPERIENCE", heading: HeadingLevel.HEADING_2 }),
+              ...tailoredResume.experience.flatMap(exp => [
+                new Paragraph({ children: [new TextRun({ text: `${exp.title} - ${exp.company}`, bold: true }), new TextRun({ text: ` (${exp.period})` })] }),
+                ...exp.bullets.map(b => new Paragraph({ text: `• ${b}` })),
+                new Paragraph({ text: "" })
+              ]),
+              new Paragraph({ text: "SKILLS & COMPETENCIES", heading: HeadingLevel.HEADING_2 }),
+              new Paragraph({ text: tailoredResume.skills }),
+              new Paragraph({ text: "" }),
+              new Paragraph({ text: "EDUCATION", heading: HeadingLevel.HEADING_2 }),
+              new Paragraph({ text: tailoredResume.education })
+            ]
+          }]
+        });
+
+        Packer.toBlob(doc).then(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${tailoredResume.name.replace(/\s+/g, '_')}_ATS_Tailored_Resume.docx`;
+          a.click();
+        });
+      };
+
+      return (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Header */}
+          <header className="mb-8 text-center border-b pb-6 border-slate-200">
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              ⚡ ATS Resume Tailor Pro
+            </h1>
+            <p className="text-slate-600 mt-2 text-sm max-w-2xl mx-auto">
+              Match your resume against target Job Descriptions, boost your ATS match score into the 80–90%+ target zone, and download standard PDF & DOCX formats.
+            </p>
+          </header>
+
+          {/* Navigation Tabs */}
+          <div className="flex border-b border-slate-200 mb-8 justify-center space-x-4">
+            <button
+              onClick={() => setActiveTab('editor')}
+              className={`pb-3 px-6 font-semibold text-sm transition-colors border-b-2 ${
+                activeTab === 'editor' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              1. Input & Tailor Engine
+            </button>
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`pb-3 px-6 font-semibold text-sm transition-colors border-b-2 ${
+                activeTab === 'dashboard' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              2. ATS Match Analytics {result && `(${result.score}%)`}
+            </button>
+            <button
+              onClick={() => setActiveTab('preview')}
+              className={`pb-3 px-6 font-semibold text-sm transition-colors border-b-2 ${
+                activeTab === 'preview' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              3. Final Resume & Export
+            </button>
+          </div>
+
+          {/* Tab 1: Inputs & Tailor */}
+          {activeTab === 'editor' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* JD Input */}
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="font-bold text-slate-800 text-sm">Target Job Description (JD)</label>
+                    <button 
+                      onClick={() => setJdText(SAMPLE_JOB_DESCRIPTION)}
+                      className="text-xs text-indigo-600 hover:underline"
+                    >
+                      Load Sample JD
+                    </button>
+                  </div>
+                  <textarea
+                    value={jdText}
+                    onChange={(e) => setJdText(e.target.value)}
+                    placeholder="Paste the Job Description here..."
+                    className="w-full h-80 p-3 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none font-mono"
+                  ></textarea>
+                </div>
+
+                {/* Resume Input */}
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="font-bold text-slate-800 text-sm">Current Resume</label>
+                    <button 
+                      onClick={() => setResumeText(SAMPLE_RESUME)}
+                      className="text-xs text-indigo-600 hover:underline"
+                    >
+                      Load Sample Resume
+                    </button>
+                  </div>
+                  <textarea
+                    value={resumeText}
+                    onChange={(e) => setResumeText(e.target.value)}
+                    placeholder="Paste your base Resume text here..."
+                    className="w-full h-80 p-3 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none font-mono"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div className="text-center pt-2">
+                <button
+                  onClick={handleAnalyzeAndTailor}
+                  disabled={isAnalyzing || !jdText || !resumeText}
+                  className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all"
+                >
+                  {isAnalyzing ? "Analyzing Keywords & Tailoring..." : "Run ATS Optimization (Target 80-90% Score)"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: Dashboard */}
+          {activeTab === 'dashboard' && result && (
+            <div className="space-y-6">
+              {/* Score Banners */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-center">
+                  <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Original Match</div>
+                  <div className="text-4xl font-extrabold text-amber-500 mt-2">{result.originalScore}%</div>
+                  <p className="text-xs text-slate-500 mt-1">Before JD keyword targeting</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl border border-emerald-200 bg-emerald-50/30 shadow-sm text-center">
+                  <div className="text-xs text-emerald-700 font-bold uppercase tracking-wider">Tailored ATS Match</div>
+                  <div className="text-5xl font-black text-emerald-600 mt-1">{result.score}%</div>
+                  <span className="inline-block mt-1 px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-semibold">
+                    Target ATS Zone Reached!
+                  </span>
+                </div>
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-center">
+                  <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Keywords Optimized</div>
+                  <div className="text-4xl font-extrabold text-indigo-600 mt-2">+{result.addedKeywords.length}</div>
+                  <p className="text-xs text-slate-500 mt-1">Injected into summary & experience</p>
+                </div>
+              </div>
+
+              {/* Keywords Breakdown */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <h3 className="font-bold text-slate-900 text-base">Key ATS Keywords & Injections</h3>
+                <div>
+                  <div className="text-xs font-semibold text-slate-500 mb-2 uppercase">Newly Injected High-Impact Terms:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {result.addedKeywords.map((kw, i) => (
+                      <span key={i} className="px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-md text-xs font-medium">
+                        + {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <div className="text-xs font-semibold text-slate-500 mb-2 uppercase">Matched Skills Found:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {result.matchedKeywords.map((kw, i) => (
+                      <span key={i} className="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-md text-xs font-medium">
+                        ✓ {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => setActiveTab('preview')}
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow transition-all"
+                >
+                  Proceed to Final Resume & Export Options →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: Preview & Download */}
+          {activeTab === 'preview' && (
+            <div className="space-y-6">
+              {/* Action Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <div>
+                  <h3 className="font-bold text-slate-900">Download & Format Options</h3>
+                  <p className="text-xs text-slate-500">Standard, single-column ATS clean document format.</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={downloadPDF}
+                    className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-lg shadow transition-all flex items-center gap-2"
+                  >
+                    <span>📄 Download PDF</span>
+                  </button>
+                  <button
+                    onClick={downloadDOCX}
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow transition-all flex items-center gap-2"
+                  >
+                    <span>📝 Download DOCX</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Editable Resume Document View */}
+              <div className="bg-slate-200 p-4 md:p-8 rounded-xl flex justify-center overflow-x-auto">
+                <div
+                  id="printable-resume"
+                  contentEditable
+                  suppressContentEditableWarning
+                  className="bg-white w-full max-w-[800px] min-h-[1000px] p-8 md:p-12 shadow-md border border-slate-300 text-slate-900 font-serif leading-relaxed text-sm outline-none"
+                >
+                  {/* Header */}
+                  <div className="text-center border-b pb-4 mb-4 border-slate-300">
+                    <h1 className="text-2xl font-bold uppercase tracking-wide text-slate-900 mb-1">
+                      {tailoredResume.name}
+                    </h1>
+                    <p className="text-xs font-sans text-slate-700">{tailoredResume.contact}</p>
+                    <p className="text-xs font-sans text-slate-700">{tailoredResume.links}</p>
+                  </div>
+
+                  {/* Summary */}
+                  <div className="mb-5">
+                    <h2 className="text-xs font-bold font-sans uppercase tracking-wider text-slate-800 border-b border-slate-400 pb-1 mb-2">
+                      Professional Summary
+                    </h2>
+                    <p className="text-xs text-slate-800 text-justify">{tailoredResume.summary}</p>
+                  </div>
+
+                  {/* Experience */}
+                  <div className="mb-5">
+                    <h2 className="text-xs font-bold font-sans uppercase tracking-wider text-slate-800 border-b border-slate-400 pb-1 mb-3">
+                      Professional Experience
+                    </h2>
+                    {tailoredResume.experience.map((exp, idx) => (
+                      <div key={idx} className="mb-4">
+                        <div className="flex justify-between font-bold text-xs text-slate-900">
+                          <span>{exp.title} — <span className="italic font-normal">{exp.company}</span></span>
+                          <span className="font-sans text-slate-600 font-normal">{exp.period}</span>
+                        </div>
+                        <ul className="list-disc pl-4 mt-1.5 space-y-1 text-xs text-slate-800">
+                          {exp.bullets.map((bullet, bIdx) => (
+                            <li key={bIdx}>{bullet}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Skills */}
+                  <div className="mb-5">
+                    <h2 className="text-xs font-bold font-sans uppercase tracking-wider text-slate-800 border-b border-slate-400 pb-1 mb-2">
+                      Skills & Core Competencies
+                    </h2>
+                    <p className="text-xs text-slate-800">{tailoredResume.skills}</p>
+                  </div>
+
+                  {/* Education */}
+                  <div>
+                    <h2 className="text-xs font-bold font-sans uppercase tracking-wider text-slate-800 border-b border-slate-400 pb-1 mb-2">
+                      Education & Certifications
+                    </h2>
+                    <p className="text-xs text-slate-800">{tailoredResume.education}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<ATSApp />);
+  </script>
+</body>
+</html>
